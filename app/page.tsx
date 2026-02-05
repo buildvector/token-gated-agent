@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import ClientOnly from "./components/ClientOnly";
-import AgentChat from "@/app/components/AgentChat";
+import AgentChat from "./components/AgentChat";
 
 type AccessState = "awaiting" | "checking" | "granted" | "denied";
 
 const SESSION_KEY = "tg_verified_until";
-const SESSION_MS = 3 * 60 * 1000; // 3 minutes
+const SESSION_MS = 3 * 60 * 1000; // 3 minutter
 
 export default function Home() {
   const { publicKey, connected, signMessage, disconnect } = useWallet();
@@ -18,7 +18,7 @@ export default function Home() {
   const [verifyFailed, setVerifyFailed] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
 
-  // When wallet disconnects, reset everything (including session + agent UI)
+  // Når wallet disconnecter, nulstil alt (inkl session + agent UI)
   useEffect(() => {
     if (!connected) {
       sessionStorage.removeItem(SESSION_KEY);
@@ -28,7 +28,7 @@ export default function Home() {
     }
   }, [connected]);
 
-  // Session restore (no auto-sign) — only if connected + still valid
+  // Session restore (ingen auto-sign) — kun hvis wallet er connected og session stadig gyldig
   useEffect(() => {
     if (!connected || !publicKey) return;
 
@@ -46,7 +46,7 @@ export default function Home() {
   async function verifyAccess() {
     if (!connected || !publicKey) return;
     if (!signMessage) {
-      alert("signMessage is not available in this wallet.");
+      alert("Wallet understøtter ikke signMessage");
       return;
     }
 
@@ -54,7 +54,7 @@ export default function Home() {
       setAccess("checking");
       setVerifyFailed(false);
 
-      // 1) Get nonce (bound to this wallet)
+      // 1) Get challenge + canonical message from backend (stateless)
       const nonceRes = await fetch("/api/auth/nonce", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,14 +62,11 @@ export default function Home() {
       });
 
       const nonceData = await nonceRes.json();
-      const nonce = String(nonceData?.nonce || "");
-      if (!nonce) throw new Error(nonceData?.error || "Nonce error");
+      const challenge = String(nonceData?.challenge || "");
+      const message = String(nonceData?.message || "");
+      if (!challenge || !message) throw new Error(nonceData?.error || "Nonce error");
 
-      // 2) Sign
-      const message = `Token-Gated Agent login
-Wallet: ${publicKey.toBase58()}
-Nonce: ${nonce}`;
-
+      // 2) Sign EXACT message from backend
       const msgBytes = new TextEncoder().encode(message);
       const sigBytes = await signMessage(msgBytes);
       const signature = btoa(String.fromCharCode(...sigBytes));
@@ -80,7 +77,7 @@ Nonce: ${nonce}`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           walletAddress: publicKey.toBase58(),
-          nonce,
+          challenge,
           message,
           signature,
         }),
@@ -151,8 +148,7 @@ Nonce: ${nonce}`;
                   : "bg-zinc-100 text-zinc-500"
               }`}
             >
-              {access === "awaiting" &&
-                (connected ? "Awaiting verification" : "Awaiting wallet")}
+              {access === "awaiting" && (connected ? "Awaiting verify" : "Awaiting wallet")}
               {access === "checking" && "Verifying"}
               {access === "granted" && "Access granted"}
               {access === "denied" && "Access denied"}
@@ -172,7 +168,7 @@ Nonce: ${nonce}`;
                         : "bg-black text-white hover:opacity-90"
                     }`}
                   >
-                    {verifyFailed ? "Retry verification" : "Verify access"}
+                    {verifyFailed ? "Retry verify" : "Verify access"}
                   </button>
                 )}
 
@@ -195,13 +191,11 @@ Nonce: ${nonce}`;
         <div className="max-w-2xl">
           <h1 className="mt-6 text-5xl font-semibold tracking-tight anim-in anim-2">
             Private access.
-            <span className="block text-zinc-500 dark:text-zinc-400">
-              Unlocked by your token.
-            </span>
+            <span className="block text-zinc-500 dark:text-zinc-400">Unlocked by your token.</span>
           </h1>
 
           <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 dark:text-zinc-400 anim-in anim-3">
-            Connect Phantom → verify once → backend validates wallet ownership + SPL token balance.
+            Connect Phantom → verify once → backend validates wallet signature + SPL token.
           </p>
 
           <div className="mt-10 flex items-center gap-4 anim-in anim-4">
@@ -231,20 +225,9 @@ Nonce: ${nonce}`;
         )}
       </main>
 
-      <footer className="mx-auto max-w-5xl px-6 pb-10 text-xs text-zinc-500 flex items-center justify-between">
-  <span>Token-Gated Agent • Next.js • Solana</span>
-
-  <button
-    onClick={() => {
-      sessionStorage.clear();
-      location.reload();
-    }}
-    className="underline hover:opacity-80"
-  >
-    Reset demo session
-  </button>
-</footer>
-
+      <footer className="mx-auto max-w-5xl px-6 pb-10 text-xs text-zinc-500">
+        Token-Gated Agent • Next.js • Solana
+      </footer>
     </div>
   );
 }
