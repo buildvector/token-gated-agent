@@ -1,94 +1,89 @@
-# Token-Gated Agent (Solana)
+# Token-Gated Agent ⚡
 
-A minimal, audit-friendly AI agent gated by on-chain SPL token ownership.
+Minimal SPL token-gated AI access control built on Solana.
 
-Users connect a Solana wallet, sign a secure challenge, and gain access to an AI agent **only if they hold ≥1 token of a specific SPL mint**.  
-No DeFi. No staking. No roles. Just clean, verifiable access control.
+## Live
 
----
-
-## Why this exists
-
-Teams, DAOs, and research groups often rely on:
-- Discord roles
-- Web2 logins
-- Off-chain permission systems
-
-These approaches **do not prove ownership** and significantly expand the attack surface.
-
-This project demonstrates a simpler and safer model:
-- **Ownership is verified on-chain**
-- **Access is granted off-chain**
-- **No custody, no sessions, no financial logic**
+https://token-gated-agent.vercel.app/
 
 ---
 
-## How it works
+## Preview
 
-1. User connects a Solana wallet (Phantom)
-2. User signs a secure challenge (no transactions)
-3. The app checks SPL token ownership for a specific mint
-4. If balance ≥ 1 → access granted
-5. If balance = 0 → access denied
-
-The AI agent (UI and API) is only available after successful ownership verification.
+![Token-Gated Agent – Access Interface](Screenshot.png)
 
 ---
 
-## Demo & testing note
+## Overview
 
-The live application uses a **controlled demo SPL mint**.
+Token-Gated Agent is a minimal access control layer that verifies SPL token ownership before granting AI access.
 
-- Token issuance, distribution, and economics are intentionally **out of scope**
-- Access is restricted to demonstrate real token-gating
-- Documentation and recordings demonstrate both:
-  - denied state (no token held)
-  - granted state (token held)
+Users connect their wallet.
+Sign a challenge.
+If token balance ≥ 1 → access granted.
 
-This is intentional and aligned with hackathon scope.
+No staking.
+No custody.
+No unnecessary complexity.
 
 ---
 
-## Design principles
+## How It Works
 
-- Non-custodial by design
+1. User connects Phantom wallet
+2. User signs a secure message
+3. App checks SPL token balance on-chain
+4. Access granted if balance requirement is met
+
+Flow:
+
+Client → Wallet signature → On-chain token check → Access decision → AI interface
+
+---
+
+## Features
+
+- SPL token ownership verification
+- Wallet-based authentication
+- Signature-based login (no transactions required)
 - Minimal attack surface
-- Verifiable on-chain ownership
-- No DeFi, no staking, no pools
-- Easy to audit and reason about
+- Clean UI
+- Stateless access logic
 
 ---
 
-## Tech stack
+## Stack
 
-- Next.js (App Router) + TypeScript
-- Solana Wallet Adapter (Phantom)
-- Solana web3.js (RPC ownership checks)
-- OpenAI API (AI agent)
-
----
-
-## Roadmap (high-level)
-
-- **v1 (current):** Single SPL mint token-gated AI agent with both UI chat and direct API access
-- **v1.1:** Support for multiple SPL mints with configurable access rules (per-mint gates, basic tiers)
-- **v2:** Token-gated AI API endpoints designed for team and DAO integrations
-
-No timelines. Scope-first development.
+- Next.js
+- TypeScript
+- Solana Web3.js
+- OpenAI
+- Vercel
 
 ---
 
-## Local development
+## Use Case
+
+Designed for:
+
+- DAO access control
+- Research communities
+- Token-based communities
+- Gated AI endpoints
+
+Ownership proves access.
+Nothing else.
+
+---
+
+## Status
+
+Live and production-ready.
+
+---
+
+## Run Locally
 
 ```bash
 npm install
 npm run dev
-Open http://localhost:3000
-
-Environment variables
-
-AUTH_SECRET
-
-SOLANA_RPC_URL
-
-OPENAI_API_KEY
